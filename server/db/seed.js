@@ -1,11 +1,12 @@
 const bcrypt = require('bcrypt');
 const pool = require('./pool');
 
-const SALT_ROUNDS = 8;
+const SALT_ROUNDS = 7;
 
 const seed = async () => {
   // Drop tables in reverse dependency order (todos references users via FK)
-  await pool.query('DROP TABLE IF EXISTS todos');
+  await pool.query('DROP TABLE IF EXISTS song');
+  await pool.query('DROP TABLE IF EXISTS playlists');
   await pool.query('DROP TABLE IF EXISTS users');
 
   await pool.query(`
@@ -17,11 +18,21 @@ const seed = async () => {
   `);
 
   await pool.query(`
-    CREATE TABLE todos (
-      todo_id     SERIAL PRIMARY KEY,
+    CREATE TABLE playlists (
+      playlist_id     SERIAL PRIMARY KEY,
       title       TEXT NOT NULL,
-      is_complete BOOLEAN NOT NULL DEFAULT FALSE,
+      description    TEXT NOT NULL,
+      is_public BOOLEAN NOT NULL DEFAULT FALSE,
       user_id     INT REFERENCES users(user_id) ON DELETE CASCADE
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE songs (
+      song_id     SERIAL PRIMARY KEY,
+      title       TEXT NOT NULL,
+      author      TEXT NOT NULL,
+      playlist_id     INT REFERENCES playlists(playlist_id) ON DELETE CASCADE
     )
   `);
 

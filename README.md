@@ -1,6 +1,8 @@
-# Todo App — Full-Stack Case Study
+# Playlist App — Full-Stack Case Study
 
-A full-stack Todo app built with React, Express, and Postgres. Demonstrates session-based authentication, session rehydration, auth-dependent data fetching, and conditional rendering — the same patterns students use in their full-stack projects.
+A full-stack Playlist app built with React, Express, and Postgres. Demonstrates session-based authentication, session rehydration, auth-dependent data fetching, and conditional rendering — the same patterns students use in their full-stack projects.
+
+This is meant for people who want to share and/or Make a stylize playlist.
 
 ## User Stories
 

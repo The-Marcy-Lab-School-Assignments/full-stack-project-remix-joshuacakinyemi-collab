@@ -1,5 +1,5 @@
 const todoModel = require('../models/todoModel');
-// changes to playlist
+// based this infomation on song added to a playlist
 module.exports.listTodos = async (req, res, next) => {
   try {
     const todos = await todoModel.listByUser(req.session.user_id);

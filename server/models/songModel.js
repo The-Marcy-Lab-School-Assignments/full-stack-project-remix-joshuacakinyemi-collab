@@ -1,5 +1,5 @@
 const pool = require('../db/pool');
-// changes so that you can create playlist by title and description, edit title and description and make it public or private.
+// changes so that you can add a song to a playlist by title and author, edit title and author.
 // Returns all todos for a specific user, ordered by creation time
 module.exports.listByUser = async (user_id) => {
   const query = 'SELECT * FROM todos WHERE user_id = $1 ORDER BY todo_id ASC';

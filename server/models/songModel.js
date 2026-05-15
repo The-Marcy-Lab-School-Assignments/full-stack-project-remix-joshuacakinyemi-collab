@@ -1,36 +1,36 @@
 const pool = require('../db/pool');
-// changes so that you can add a song to a playlist by title and author, edit title and author.
-// Returns all todos for a specific user, ordered by creation time
-module.exports.listByUser = async (user_id) => {
-  const query = 'SELECT * FROM todos WHERE user_id = $1 ORDER BY todo_id ASC';
-  const { rows } = await pool.query(query, [user_id]);
+// changes so that you can create playlist by title and description, edit title and description and make it public or private.
+// Returns all songs for a specific playlist, ordered by song_id
+module.exports.listByPlaylist = async (playlist_id) => {
+  const query = 'SELECT * FROM songs WHERE playlist_id = $1 ORDER BY song_id ASC';
+  const { rows } = await pool.query(query, [playlist_id]);
   return rows;
 };
 
-// Returns a single todo row (used for ownership checks before update/delete)
-module.exports.find = async (todo_id) => {
-  const query = 'SELECT * FROM todos WHERE todo_id = $1';
-  const { rows } = await pool.query(query, [todo_id]);
+// Returns a single song row (used for ownership checks before update/delete)
+module.exports.find = async (song_id) => {
+  const query = 'SELECT * FROM songs WHERE song_id = $1';
+  const { rows } = await pool.query(query, [song_id]);
   return rows[0] || null;
 };
 
-// Creates a new todo. Returns the full todo row.
-module.exports.create = async (title, user_id) => {
-  const query = 'INSERT INTO todos (title, user_id) VALUES ($1, $2) RETURNING *';
-  const { rows } = await pool.query(query, [title, user_id]);
+// Creates a new song. Returns the full song row.
+module.exports.create = async (title, author, playlist_id) => {
+  const query = 'INSERT INTO songs (title, author, playlist_id) VALUES ($1, $2, $3) RETURNING *';
+  const { rows } = await pool.query(query, [title, author, playlist_id]);
   return rows[0];
 };
 
-// Updates is_complete for a todo. Returns the updated row.
-module.exports.update = async (todo_id, { is_complete }) => {
-  const query = 'UPDATE todos SET is_complete = $1 WHERE todo_id = $2 RETURNING *';
-  const { rows } = await pool.query(query, [is_complete, todo_id]);
+// Updates title and/or author for a song. Returns the updated row.
+module.exports.update = async (song_id, { title, author }) => {
+  const query = 'UPDATE songs SET title = $1, author = $2 WHERE song_id = $3 RETURNING *';
+  const { rows } = await pool.query(query, [title, author, song_id]);
   return rows[0];
 };
 
-// Deletes a todo by id
-module.exports.destroy = async (todo_id) => {
-  const query = 'DELETE FROM todos WHERE todo_id = $1 RETURNING *';
-  const { rows } = await pool.query(query, [todo_id]);
+// Deletes a song by id
+module.exports.destroy = async (song_id) => {
+  const query = 'DELETE FROM songs WHERE song_id = $1 RETURNING *';
+  const { rows } = await pool.query(query, [song_id]);
   return rows[0] || null;
 };

@@ -6,7 +6,8 @@ require('dotenv').config();
 const logRoutes = require('./middleware/logRoutes');
 const checkAuthentication = require('./middleware/checkAuthentication');
 const authControllers = require('./controllers/authControllers');
-const todoControllers = require('./controllers/todoControllers');
+const playlistControllers = require('./controllers/playlistControllers');
+const songControllers = require('./controllers/songControllers');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -34,13 +35,23 @@ app.get('/api/auth/me', authControllers.getMe);
 app.delete('/api/auth/logout', authControllers.logout);
 
 // ====================================
-// Todo routes (all require authentication)
+// Playlist routes (all require authentication)
 // ====================================
 
-app.get('/api/todos', checkAuthentication, todoControllers.listTodos);
-app.post('/api/todos', checkAuthentication, todoControllers.createTodo);
-app.patch('/api/todos/:todo_id', checkAuthentication, todoControllers.updateTodo);
-app.delete('/api/todos/:todo_id', checkAuthentication, todoControllers.deleteTodo);
+app.get('/api/playlists', checkAuthentication, playlistControllers.listPlaylists);
+app.post('/api/playlists', checkAuthentication, playlistControllers.createPlaylist);
+app.patch('/api/playlists/:playlist_id', checkAuthentication, playlistControllers.updatePlaylist);
+app.patch('/api/playlists/:playlist_id/visibility', checkAuthentication, playlistControllers.updateVisibility);
+app.delete('/api/playlists/:playlist_id', checkAuthentication, playlistControllers.deletePlaylist);
+
+// ====================================
+// Song routes (all require authentication)
+// ====================================
+
+app.get('/api/playlists/:playlist_id/songs', checkAuthentication, songControllers.listSongs);
+app.post('/api/playlists/:playlist_id/songs', checkAuthentication, songControllers.createSong);
+app.patch('/api/songs/:song_id', checkAuthentication, songControllers.updateSong);
+app.delete('/api/songs/:song_id', checkAuthentication, songControllers.deleteSong);
 
 // ====================================
 // Global Error Handler

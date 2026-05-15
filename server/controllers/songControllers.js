@@ -1,54 +1,61 @@
-const todoModel = require('../models/todoModel');
-// based this infomation on song added to a playlist
-module.exports.listTodos = async (req, res, next) => {
+const songModel = require('../models/songModel');
+const playlistModel = require('../models/playlistModel')
+
+const verifyOwnership = async (song, session_user_id, res) => {
+  const playlist = await playlistModel.find(song.playlist_id);
+  if (playlist.user_id !== session_user_id) {
+    res.status(403).send({ error: 'Not authorized.' });
+    return false;
+  }
+  return true;
+};
+
+// changes to playlist
+module.exports.listSongs = async (req, res, next) => {
   try {
-    const todos = await todoModel.listByUser(req.session.user_id);
-    res.send(todos);
+    const { playlist_id } = req.params;
+    const songs = await songModel.listByPlaylist(playlist_id);
+    res.send(songs);
   } catch (err) {
     next(err);
   }
 };
 
-module.exports.createTodo = async (req, res, next) => {
+module.exports.createSong = async (req, res, next) => {
   try {
-    const { title } = req.body;
-    if (!title) return res.status(400).send({ error: 'Title is required.' });
-    const todo = await todoModel.create(title, req.session.user_id);
-    res.status(201).send(todo);
+    const { playlist_id } = req.params;
+    const { title, author } = req.body;
+    if (!title && !author) return res.status(400).send({ error: 'Title and author is required.' });
+    const song = await songModel.create(title, author, playlist_id);
+    res.status(201).send(song);
   } catch (err) {
     next(err);
   }
 };
 
-module.exports.updateTodo = async (req, res, next) => {
+module.exports.updateSong = async (req, res, next) => {
   try {
-    const { todo_id } = req.params;
-    const todo = await todoModel.find(todo_id);
-    if (!todo) return res.status(404).send({ error: 'Todo not found.' });
-    if (todo.user_id !== req.session.user_id) {
-      return res.status(403).send({ error: 'Not authorized.' });
-    }
-    const updatedTodo = await todoModel.update(todo_id, req.body);
-    res.send(updatedTodo);
+    const { song_id } = req.params;
+    const song = await songModel.find(song_id);
+    if (!song) return res.status(404).send({ error: 'Song not found.' });
+
+    if (!(await verifyOwnership(song, req.session.user_id, res))) return;
+    const updatedSong = await songModel.update(song_id, req.body);
+    res.send(updatedSong);
   } catch (err) {
     next(err);
   }
 };
 
-module.exports.deleteTodo = async (req, res, next) => {
+module.exports.deleteSong = async (req, res, next) => {
   try {
-    const { todo_id } = req.params;
+    const { song_id } = req.params;
+    const song = await songModel.find(song_id);
+    if (!song) return res.status(404).send({ error: 'Song not found.' });
 
-    // First find the todo to verify ownership
-    const todo = await todoModel.find(todo_id);
-    if (!todo) return res.status(404).send({ error: 'Todo not found.' });
-    if (todo.user_id !== req.session.user_id) {
-      return res.status(403).send({ error: 'Not authorized.' });
-    }
-
-    // Destroy the todo only after ownership has been verified
-    const destroyedTodo = await todoModel.destroy(todo_id);
-    res.send(destroyedTodo);
+    if (!(await verifyOwnership(song, req.session.user_id, res))) return;
+    const destroyedSong = await songModel.destroy(song_id);
+    res.send(destroyedSong);
   } catch (err) {
     next(err);
   }

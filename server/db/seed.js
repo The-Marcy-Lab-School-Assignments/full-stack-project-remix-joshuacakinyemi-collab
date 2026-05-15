@@ -5,7 +5,7 @@ const SALT_ROUNDS = 7;
 
 const seed = async () => {
   // Drop tables in reverse dependency order (todos references users via FK)
-  await pool.query('DROP TABLE IF EXISTS song');
+  await pool.query('DROP TABLE IF EXISTS songs');
   await pool.query('DROP TABLE IF EXISTS playlists');
   await pool.query('DROP TABLE IF EXISTS users');
 
@@ -52,27 +52,28 @@ const seed = async () => {
 
   const [DjRandom, ImNotACat] = users;
 
-  await pool.query(`
+  const { rows: playlists } = await pool.query(`
     INSERT INTO playlists (title, description, is_public, user_id) VALUES
-      ('Can't let gang kno I fw this', 'You'll never see this' ,  FALSE, $1), 
+      ('Can''t let gang kno I fw this', 'You'll never see this' ,  FALSE, $1), 
       ('Random Mix', 'Youtube autoplay be like',  TRUE,  $1),
       ('Phantom Beats', 'You never hear this coming', TRUE,  $2), 
       ('Joker Mixtape',  'walk around day and night', FALSE, $2)
+      RETURNING playlist_id
   `, [DjRandom.user_id, ImNotACat.user_id]);
 
   const [CLGKIFT, RM, PB, JM] = playlists;
 
   await pool.query(`
     INSERT INTO songs (title, author, playlist_id) VALUES
-      ('Everytime We Touch', 'CASCADA' , $1), 
-      ('Boom, Boom, Boom, Boom!!', 'Vengaboys',  $1),
-      ('Cheerleader', 'OMI',  $2), 
-      ('Clone High',  'Abandoned Pools', $2),
-      ('Life Will Change', 'Lyn Inaizumi' , $3), 
-      ('Take Over', 'Lyn Inaizumi',  $3),
-      ('Beneath the Mask', 'Lyn Inaizumi',  $4), 
-      ('No More What Ifs',  'Lyn Inaizumi', $4)
-  `, [CLGKIFT.playlist_id, Rm.playlist_id, PB.playlist_id, JM.playlist_id]);
+      ('Everytime We Touch',       'CASCADA' ,        $1), 
+      ('Boom, Boom, Boom, Boom!!', 'Vengaboys',       $1),
+      ('Cheerleader',              'OMI',             $2), 
+      ('Clone High',               'Abandoned Pools', $2),
+      ('Life Will Change',         'Lyn Inaizumi' ,   $3), 
+      ('Take Over',                'Lyn Inaizumi',    $3),
+      ('Beneath the Mask',         'Lyn Inaizumi',    $4), 
+      ('No More What Ifs',         'Lyn Inaizumi',    $4)
+  `, [CLGKIFT.playlist_id, RM.playlist_id, PB.playlist_id, JM.playlist_id]);
 
   return users;
 };

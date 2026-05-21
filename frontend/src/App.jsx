@@ -5,32 +5,55 @@ import PlaylistPage from './components/playlist/PlaylistPage';
 import PublicPlaylistPage from './components/playlist/PublicPlaylistPage';
 import PublicSongPage from './components/song/PublicSongPage';
 import ThemeControls from './components/theme/ThemeControls';
+
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [selectedPlaylist, setSelectedPlaylist] = useState(null)
-  const [currentPage, setCurrentPage] = useState(() => sessionStorage.getItem('currentPage') || 'home');
+
+  const [currentPage, setCurrentPage] = useState(
+    () => sessionStorage.getItem('currentPage') || 'home'
+  );
+
+  const [selectedPlaylist, setSelectedPlaylist] = useState(
+    () => {
+      const saved = sessionStorage.getItem('selectedPlaylist');
+      return saved ? JSON.parse(saved) : null; // fix: restore selected playlist
+    }
+  );
 
   const setPage = (page) => {
     sessionStorage.setItem('currentPage', page);
-    setCurrentPage(page)
-  }
+    setCurrentPage(page);
+  };
 
-  // On every page load, check the server for an active session cookie.
-  // React state doesn't survive a refresh; session cookies do.
+  const selectPlaylist = (playlist) => {
+    if (playlist) {
+      sessionStorage.setItem('selectedPlaylist', JSON.stringify(playlist)); // fix: persist
+    } else {
+      sessionStorage.removeItem('selectedPlaylist');
+    }
+    setSelectedPlaylist(playlist);
+  };
+
   useEffect(() => {
     const checkForSession = async () => {
       const { data: user } = await getMe();
       if (user) {
         setCurrentUser(user);
-        setCurrentPage('myPlaylists')
+        // only navigate to myPlaylists if they weren't already on a specific page
+        if (sessionStorage.getItem('currentPage') !== 'home') {
+          setPage('myPlaylists');
+        }
+      } else {
+        // if no session, make sure we're not stuck on myPlaylists
+        if (sessionStorage.getItem('currentPage') === 'myPlaylists') {
+          setPage('home');
+        }
       }
     };
     checkForSession();
   }, []);
 
-  // Handlers that manage updating the current user. 
-  // Defined in App to ensure that child components only                       
-  // update the current user in a controlled manner.  
+
   const handleLogin = async (username, password) => {
     const { data: user, error } = await login(username, password);
     if (error) return error;
@@ -48,51 +71,52 @@ function App() {
   const handleLogout = async () => {
     await logout();
     setCurrentUser(null);
-    setSelectedPlaylist(null);
+    selectPlaylist(null);
     setPage('home');
   };
 
   const goHome = () => {
-    setSelectedPlaylist(null);
+    selectPlaylist(null);
     setPage('home');
   };
 
+
   const renderPage = () => {
-    // Viewing songs in a playlist — works for everyone
+
     if (selectedPlaylist) {
       return (
         <PublicSongPage
           playlist={selectedPlaylist}
-          onBack={() => setSelectedPlaylist(null)}
+          onBack={() => selectPlaylist(null)}
         />
       );
     }
 
-    // Logged-in user viewing their own playlists
+
     if (currentPage === 'myPlaylists' && currentUser) {
       return (
         <PlaylistPage
           currentUser={currentUser}
           handleLogout={handleLogout}
-          onSelectPlaylist={setSelectedPlaylist} // so they can click into a playlist's songs
+          onSelectPlaylist={selectPlaylist}
         />
       );
     }
 
-    // Default: public playlist browser + auth form for guests
+
     return (
       <>
-        <PublicPlaylistPage setSelectedPlaylist={setSelectedPlaylist} />
+        <PublicPlaylistPage setSelectedPlaylist={selectPlaylist} />
         {!currentUser && (
           <AuthPage handleLogin={handleLogin} handleRegister={handleRegister} />
         )}
       </>
     );
-  }
+  };
 
   return (
     <main>
-      {/* Nav bar */}
+
       <nav>
         <h1 onClick={goHome} style={{ cursor: 'pointer' }}>Playlist App</h1>
 
@@ -113,7 +137,7 @@ function App() {
           <button onClick={handleLogout}>Log Out</button>
         )}
 
-        <ThemeControls />
+        <ThemeControls /> { }
       </nav>
 
       {renderPage()}

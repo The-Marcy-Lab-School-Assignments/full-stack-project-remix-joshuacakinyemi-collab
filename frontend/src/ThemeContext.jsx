@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
 
@@ -12,13 +12,22 @@ const ACCENTS = [
 ];
 
 export function ThemeProvider({ children }) {
-  const [isDark, setIsDark] = useState(true);
-  const [accentIndex, setAccentIndex] = useState(4); // default blue
+  const [isDark, setIsDark] = useState(
+    () => localStorage.getItem('theme-mode') !== 'light' // default dark
+  );
+  const [accentIndex, setAccentIndex] = useState(
+    () => parseInt(localStorage.getItem('theme-accent') ?? '4') // default blue
+  );
 
-  const accent = ACCENTS[accentIndex];
+  useEffect(() => {
+    const a = ACCENTS[accentIndex];
+    document.documentElement.style.setProperty('--accent', a.color);
+    document.documentElement.style.setProperty('--accent-glow', a.glow);
+    document.body.classList.toggle('light', !isDark);
+  }, []);
 
   const applyTheme = (dark, idx) => {
-    const root = document.documentElement;
+
     const a = ACCENTS[idx];
     root.style.setProperty('--accent', a.color);
     root.style.setProperty('--accent-glow', a.glow);
@@ -28,16 +37,18 @@ export function ThemeProvider({ children }) {
   const toggleMode = () => {
     const next = !isDark;
     setIsDark(next);
+    localStorage.setItem('theme-mode', next ? 'dark' : 'light');
     applyTheme(next, accentIndex);
   };
 
   const setAccent = (idx) => {
     setAccentIndex(idx);
+    localStorage.setItem('theme-accent', idx)
     applyTheme(isDark, idx);
   };
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleMode, accentIndex, setAccent, ACCENTS, accent }}>
+    <ThemeContext.Provider value={{ isDark, toggleMode, accentIndex, setAccent, ACCENTS, accent: ACCENTS[accentIndex] }}>
       {children}
     </ThemeContext.Provider>
   );

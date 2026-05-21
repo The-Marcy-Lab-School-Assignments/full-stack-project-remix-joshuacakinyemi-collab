@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const pool = require('../db/pool');
 
-const SALT_ROUNDS = 8;
+const SALT_ROUNDS = 7;
 
 // Creates a new user. Returns { user_id, username } — never exposes password_hash.
 module.exports.create = async (username, password) => {

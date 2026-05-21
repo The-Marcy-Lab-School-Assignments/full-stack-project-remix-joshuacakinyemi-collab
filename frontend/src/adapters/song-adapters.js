@@ -9,26 +9,26 @@ const handleFetch = async (url, options = {}) => {
   }
 };
 
-export const fetchAllTodos = async () => {
-  return handleFetch('/api/todos');
+export const fetchAllSongs = async (playlist_id) => {
+  return handleFetch(`/api/playlists/${playlist_id}/songs`);
 };
 
-export const createTodo = async (title) => {
-  return handleFetch('/api/todos', {
+export const createSong = async (playlist_id, title, author) => {
+  return handleFetch(`/api/playlists/${playlist_id}/songs`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({ title, author }),
   });
 };
 
-export const updateTodo = async (todo_id, updates) => {
-  return handleFetch(`/api/todos/${todo_id}`, {
+export const updateSong = async (song_id, updates) => {
+  return handleFetch(`/api/songs/${song_id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
   });
 };
 
-export const deleteTodo = async (todo_id) => {
-  return handleFetch(`/api/todos/${todo_id}`, { method: 'DELETE' });
+export const deleteSong = async (song_id) => {
+  return handleFetch(`/api/songs/${song_id}`, { method: 'DELETE' });
 };

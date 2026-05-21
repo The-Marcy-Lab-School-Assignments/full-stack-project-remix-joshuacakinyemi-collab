@@ -1,12 +1,13 @@
 const bcrypt = require('bcrypt');
 const pool = require('./pool');
-
-const SALT_ROUNDS = 8;
+// Add Songs table and changes Todo to playlist add details on both playlist and song
+const SALT_ROUNDS = 7;
 
 const seed = async () => {
   // Drop tables in reverse dependency order (todos references users via FK)
-  await pool.query('DROP TABLE IF EXISTS todos');
-  await pool.query('DROP TABLE IF EXISTS users');
+  await pool.query('DROP TABLE IF EXISTS songs CASCADE');
+  await pool.query('DROP TABLE IF EXISTS playlists CASCADE');
+  await pool.query('DROP TABLE IF EXISTS users CASCADE');
 
   await pool.query(`
     CREATE TABLE users (
@@ -17,39 +18,65 @@ const seed = async () => {
   `);
 
   await pool.query(`
-    CREATE TABLE todos (
-      todo_id     SERIAL PRIMARY KEY,
+    CREATE TABLE playlists (
+      playlist_id     SERIAL PRIMARY KEY,
       title       TEXT NOT NULL,
-      is_complete BOOLEAN NOT NULL DEFAULT FALSE,
+      description    TEXT NOT NULL,
+      is_public BOOLEAN NOT NULL DEFAULT FALSE,
       user_id     INT REFERENCES users(user_id) ON DELETE CASCADE
     )
   `);
 
+  await pool.query(`
+    CREATE TABLE songs (
+      song_id     SERIAL PRIMARY KEY,
+      title       TEXT NOT NULL,
+      author      TEXT NOT NULL,
+      youtube_id  TEXT,
+      thumbnail   TEXT,
+      playlist_id     INT REFERENCES playlists(playlist_id) ON DELETE CASCADE
+    )
+  `);
+
   // Hash passwords in parallel — bcrypt is slow by design (CPU-bound hashing)
-  const [aliceHash, bobHash] = await Promise.all([
-    bcrypt.hash('password123', SALT_ROUNDS),
-    bcrypt.hash('password123', SALT_ROUNDS),
+  const [DjRandomHash, ImNotACatHash] = await Promise.all([
+    bcrypt.hash('letmein123', SALT_ROUNDS),
+    bcrypt.hash('tunaTreat06', SALT_ROUNDS),
   ]);
 
   // RETURNING captures inserted user_ids so we don't hardcode them
   const { rows: users } = await pool.query(`
     INSERT INTO users (username, password_hash) VALUES
-      ('alice', $1),
-      ('bob',   $2)
+      ('DjRandom', $1),
+      ('ImNotACat', $2)
     RETURNING user_id, username
-  `, [aliceHash, bobHash]);
+  `, [DjRandomHash, ImNotACatHash]);
 
-  const [alice, bob] = users;
+  const [DjRandom, ImNotACat] = users;
+
+  const { rows: playlists } = await pool.query(`
+    INSERT INTO playlists (title, description, is_public, user_id) VALUES
+      ('Can''t let gang kno I fw this', 'You''ll never see this' ,  FALSE, $1), 
+      ('Random Mix', 'Youtube autoplay be like',  TRUE,  $1),
+      ('Phantom Beats', 'You never hear this coming', TRUE,  $2), 
+      ('Joker Mixtape',  'walk around day and night', FALSE, $2)
+    RETURNING playlist_id
+  `, [DjRandom.user_id, ImNotACat.user_id]);
+
+  const [CLGKIFT, RM, PB, JM] = playlists;
 
   await pool.query(`
-    INSERT INTO todos (title, is_complete, user_id) VALUES
-      ('Buy groceries',        FALSE, $1),
-      ('Walk the dog',         FALSE, $1),
-      ('Read a book',          TRUE,  $1),
-      ('Set up the database',  TRUE,  $2),
-      ('Build the API',        TRUE,  $2),
-      ('Build the frontend',   FALSE, $2)
-  `, [alice.user_id, bob.user_id]);
+    INSERT INTO songs (title, author, playlist_id) VALUES
+      ('Everytime We Touch',       'CASCADA' ,        $1), 
+      ('Boom, Boom, Boom, Boom!!', 'Vengaboys',       $1),
+      ('I wanna kno',              '2 Mello',         $2),
+      ('Cheerleader',              'OMI',             $2), 
+      ('Clone High',               'Abandoned Pools', $2),
+      ('Life Will Change',         'Lyn Inaizumi' ,   $3), 
+      ('Take Over',                'Lyn Inaizumi',    $3),
+      ('Beneath the Mask',         'Lyn Inaizumi',    $4), 
+      ('No More What Ifs',         'Lyn Inaizumi',    $4)
+  `, [CLGKIFT.playlist_id, RM.playlist_id, PB.playlist_id, JM.playlist_id]);
 
   return users;
 };

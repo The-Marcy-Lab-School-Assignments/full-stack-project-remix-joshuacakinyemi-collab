@@ -1,30 +1,30 @@
-import { useEffect, useState } from "react";
-import { fetchPublicPlaylists } from "../../adapters/playlist-adapters.js";
+import { useEffect, useState } from 'react';
+import { fetchPublicPlaylists } from '../../adapters/playlist-adapters.js';
 
 function PublicPlaylistPage({ setSelectedPlaylist }) {
-  const [playlists, setPlaylists] = useState([])
+  const [playlists, setPlaylists] = useState([]);
   const [query, setQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  // filter by title only
   const filtered = playlists.filter(p =>
     p.title.toLowerCase().includes(query.toLowerCase())
   );
-
 
   useEffect(() => {
     const loadPublicPlaylists = async () => {
       setIsLoading(true);
       const { data, error: fetchError } = await fetchPublicPlaylists();
       if (fetchError) setError(fetchError.message);
-      else setPlaylists(data)
+      else setPlaylists(data);
       setIsLoading(false);
-    }
-    loadPublicPlaylists()
-  }, [])
+    };
+    loadPublicPlaylists();
+  }, []);
 
-  if (isLoading) return <p>Loading Playlist...</p>;
-  if (error) return <p className='error'>Something went wrong: {error}</p>
+  if (isLoading) return <p>Loading playlists...</p>;
+  if (error) return <p className="error">Something went wrong: {error}</p>;
 
   return (
     <section>

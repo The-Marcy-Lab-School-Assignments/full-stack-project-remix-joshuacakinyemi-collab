@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { fetchAllTodos } from '../adapters/todo-adapters';
-import AddTodoForm from './AddTodoForm';
-import TodoList from './TodoList';
+import { fetchAllSongs } from '../../adapters/song-adapters.js';
+import AddSongForm from './AddSongForm.jsx';
+import SongList from './SongList.jsx';
 
-function TodoPage({ currentUser, handleLogout }) {
-  const [todos, setTodos] = useState([]);
+function SongPage({ currentUser, handleLogout, playlist_id }) {
+  const [songs, setSongs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -12,20 +12,20 @@ function TodoPage({ currentUser, handleLogout }) {
   // It is also used within the AddTodoForm and TodoList
   // to re-fetch the todos when a mutation action is performed
   // such as creating, deleting, or updating a todo.
-  const loadTodos = async () => {
+  const loadSongs = async () => {
     setIsLoading(true);
     setError(null);
-    const { data, error: fetchError } = await fetchAllTodos();
+    const { data, error: fetchError } = await fetchAllSongs(playlist_id);
     if (fetchError) {
       setError(fetchError.message);
     } else {
-      setTodos(data);
+      setSongs(data);
     }
     setIsLoading(false);
   };
 
   useEffect(() => {
-    loadTodos();
+    loadSongs();
   }, []);
 
   return (
@@ -34,12 +34,12 @@ function TodoPage({ currentUser, handleLogout }) {
         <span>Welcome, <strong>{currentUser.username}</strong>!</span>
         <button onClick={handleLogout}>Log Out</button>
       </div>
-      <AddTodoForm loadTodos={loadTodos} />
-      {isLoading && <p>Loading todos...</p>}
+      <AddSongForm playlist_id={playlist_id} loadSongs={loadSongs} />
+      {isLoading && <p>Loading Song...</p>}
       {error && <p className="error">Something went wrong: {error}</p>}
-      <TodoList todos={todos} loadTodos={loadTodos} />
+      <SongList songs={songs} loadSongs={loadSongs} />
     </section>
   );
 }
 
-export default TodoPage;
+export default SongPage;

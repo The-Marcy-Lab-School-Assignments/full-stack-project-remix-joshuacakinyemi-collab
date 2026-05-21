@@ -5,9 +5,9 @@ const SALT_ROUNDS = 7;
 
 const seed = async () => {
   // Drop tables in reverse dependency order (todos references users via FK)
-  await pool.query('DROP TABLE IF EXISTS songs');
-  await pool.query('DROP TABLE IF EXISTS playlists');
-  await pool.query('DROP TABLE IF EXISTS users');
+  await pool.query('DROP TABLE IF EXISTS songs CASCADE');
+  await pool.query('DROP TABLE IF EXISTS playlists CASCADE');
+  await pool.query('DROP TABLE IF EXISTS users CASCADE');
 
   await pool.query(`
     CREATE TABLE users (
@@ -32,6 +32,8 @@ const seed = async () => {
       song_id     SERIAL PRIMARY KEY,
       title       TEXT NOT NULL,
       author      TEXT NOT NULL,
+      youtube_id  TEXT,
+      thumbnail   TEXT,
       playlist_id     INT REFERENCES playlists(playlist_id) ON DELETE CASCADE
     )
   `);
@@ -54,11 +56,11 @@ const seed = async () => {
 
   const { rows: playlists } = await pool.query(`
     INSERT INTO playlists (title, description, is_public, user_id) VALUES
-      ('Can''t let gang kno I fw this', 'You'll never see this' ,  FALSE, $1), 
+      ('Can''t let gang kno I fw this', 'You''ll never see this' ,  FALSE, $1), 
       ('Random Mix', 'Youtube autoplay be like',  TRUE,  $1),
       ('Phantom Beats', 'You never hear this coming', TRUE,  $2), 
       ('Joker Mixtape',  'walk around day and night', FALSE, $2)
-      RETURNING playlist_id
+    RETURNING playlist_id
   `, [DjRandom.user_id, ImNotACat.user_id]);
 
   const [CLGKIFT, RM, PB, JM] = playlists;
@@ -67,6 +69,7 @@ const seed = async () => {
     INSERT INTO songs (title, author, playlist_id) VALUES
       ('Everytime We Touch',       'CASCADA' ,        $1), 
       ('Boom, Boom, Boom, Boom!!', 'Vengaboys',       $1),
+      ('I wanna kno',              '2 Mello',         $2),
       ('Cheerleader',              'OMI',             $2), 
       ('Clone High',               'Abandoned Pools', $2),
       ('Life Will Change',         'Lyn Inaizumi' ,   $3), 

@@ -46,6 +46,8 @@ songs
 song_id     SERIAL PRIMARY KEY,
 title       TEXT NOT NULL,
 author      TEXT NOT NULL,
+youtube_id  TEXT,
+thumbnail   TEXT,
 playlist_id     INT REFERENCES playlists(playlist_id) ON DELETE CASCADE
 ```
 
@@ -65,22 +67,29 @@ A playlist has many songs. Deleting a playlist cascades to delete all of their s
 
 ### Playlist endpoints (all require authentication)
 
-| Method | Endpoint                       | Request Body            | Response                                                    |
-| ------ | ------------------------------ | ----------------------- | ----------------------------------------------------------- |
-| GET    | `/api/playists`                | —                       | `[{ playlist_id, title, description, is_public, user_id }]` |
-| POST   | `/api/playlists`               | `{ title, description }`| `{ playlist_id, title, description, is_public, user_id }`   |
-| PATCH  | `/api/playlists/:playlists_id` | `{ title, description }`| `{ playlist_id, title, description, is_public, user_id }`   |
-| PATCH  | `/api/playlists/:playlist_id`  | `{ is_public }`         | `{ playlist_id, title, description, is_public, user_id }`   |
-| DELETE | `/api/playlists/:playlist_id`  | —                       | `{ playlist_id, title, description, is_public, user_id }`   |
+| Method | Endpoint                                  | Request Body            | Response                                                    |
+| ------ | ----------------------------------------- | ----------------------- | ----------------------------------------------------------- |
+| GET    | `/api/playists`                           | —                       | `[{ playlist_id, title, description, is_public, user_id }]` |
+| GET    | `/api/playists/public`                    | —                       | `[{ playlist_id, title, description, is_public, user_id }]` |
+| POST   | `/api/playlists`                          | `{ title, description }`| `{ playlist_id, title, description, is_public, user_id }`   |
+| PATCH  | `/api/playlists/:playlists_id`            | `{ title, description }`| `{ playlist_id, title, description, is_public, user_id }`   |
+| PATCH  | `/api/playlists/:playlist_id/visibility`  | `{ is_public }`         | `{ playlist_id, title, description, is_public, user_id }`   |
+| DELETE | `/api/playlists/:playlist_id`             | —                       | `{ playlist_id, title, description, is_public, user_id }`   |
 
 ### Song endpoints (all require authentication unless playlist is public, then viewing is allow)
 
-| Method | Endpoint              | Request Body        | Response                                     |
-| ------ | --------------------- | ------------------- | -------------------------------------------- |
-| GET    | `/api/Songs`          | —                   | `[{ song_id, title, author, playlist_id }]`  |
-| POST   | `/api/Songs`          | `{ title , author}` | `{ song_id, title, author, playlist_id }`    |
-| PATCH  | `/api/Songs/:Song_id` | `{ title , author }`| `{ song_id, title, author, playlist_id }`    |
-| DELETE | `/api/Songs/:Song_id` | —                   | `{ song_id, title, author, playlist_id }`    |
+| Method | Endpoint                             | Request Body        | Response                                     |
+| ------ | -------------------------------------| ------------------- | -------------------------------------------- |
+| GET    | `/api/playlists/:playlist_id/songs`  | —                   | `[{ song_id, title, author, playlist_id }]`  |
+| POST   | `/api/playlists/:playlist_id/songs`  | `{ title , author}` | `{ song_id, title, author, playlist_id }`    |
+| PATCH  | `/api/Songs/:Song_id`                | `{ title , author }`| `{ song_id, title, author, playlist_id }`    |
+| DELETE | `/api/Songs/:Song_id`                | —                   | `{ song_id, title, author, playlist_id }`    |
+
+### Youtube Data Handler (The thing that decide what song should be fetch)
+
+| Method | Endpoint                             | Request Body        | Response                                     |
+| ------ | -------------------------------------| ------------------- | -------------------------------------------- |
+| GET    | `/api/songs/:song_id/youtube`        | —                   | `[{ song_id, youtube_id, thumbnail }]`  |
 
 ## Setup
 
@@ -144,19 +153,32 @@ swe-casestudy-7-todo-app/
 │   │   ├── App.jsx         # Root component: currentUser state, session rehydration, auth handlers
 │   │   ├── adapters/
 │   │   │   ├── auth-adapters.js  # Fetch adapters for /api/auth/* endpoints
-│   │   │   └── playlist-adapters.js  # Fetch adapters for /api/playlists/* endpoints
+│   │   │   ├── playlist-adapters.js  # Fetch adapters for /api/playlists/* endpoints
 |   |   |   └── song-adapters.js  # Fetch adapters for /api/songs/* endpoints
 |   |   |   
 │   │   └── components/
-│   │       ├── AuthPage.jsx    # Login + Register forms (shown when logged out)
-│   │       ├── PlaylistPage.jsx    # Main app container (shown when logged in)
-│   │       ├── AddPlaylistForm.jsx # Form to create a new Playlist
-│   │       ├── Playlists.jsx    # Renders a list of Playlists
-│   │       ├── Playlist.jsx    # Single Playlist: checkbox, title, delete button
-│   │       ├── songPage.jsx    # A Playlist songs container (shown when logged in)
-│   │       ├── AddsongForm.jsx # Form to add a new song to a playlist
-│   │       ├── SongLists.jsx    # Renders a list of songs
-│   │       └── Song.jsx    # Single songs: checkbox, title, delete button
+|   |       ├── playlist/
+|   |       |    ├── PlaylistPage.jsx    # Main app container (shown when logged in)
+|   |       |    ├── AddPlaylistForm.jsx # Form to create a new Playlist
+|   |       |    ├── PublicPlaylistsPage.jsx    # Renders a list of Playlists that are public to all users
+|   |       |    ├── PlaylistsItem.jsx    # Renders a Playlist
+|   |       |    └── PlaylistList.jsx # Renders a list of Playlists
+|   |       |
+|   |       └── song/
+|   |       |    ├── SongPage.jsx    # Main app container (shown when logged in)
+|   |       |    ├── AddSongForm.jsx # Form to add a new Song to a Playlist
+|   |       |    ├── PublicSongPage.jsx    # Renders a list of song in a public Playlists that all users can see
+|   |       |    ├── SongItem.jsx    # Renders a song
+|   |       |    └── SongList.jsx # Renders a list of song in a playlist
+|   |       |
+|   |       └── theme/
+|   |       |    ├── ThemeControls.jsx    # Main app container (shown when logged in)
+|   |       |    └── Visualizer.jsx # Form a bar that show while the music played
+|   |       |
+|   |       ├──ThemeContext.jsx # handle webpage accent color and light/dark mode
+|   |       ├── music.jsx       # Song Player 
+│   │       └── AuthPage.jsx    # Login + Register forms (shown when logged out)
+|   |
 │   └── vite.config.js      # Proxies /api requests to Express in development
 └── server/                 # Express + Postgres API
     ├── index.js            # App entry point, route definitions
@@ -168,6 +190,7 @@ swe-casestudy-7-todo-app/
     │   ├── userModel.js    # SQL queries for the users table
     |   ├── playlistModel.js    # SQL queries for the playlists table
     │   └── songModel.js    # SQL queries for the songs table
+    ├── utils/youtubeSearch.js # fetch for youtube song
     ├── middleware/
     │   ├── checkAuthentication.js  # Blocks unauthenticated requests
     │   └── logRoutes.js            # Logs each incoming request

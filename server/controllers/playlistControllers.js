@@ -9,6 +9,15 @@ module.exports.listPlaylists = async (req, res, next) => {
   }
 };
 
+module.exports.listPublicPlaylists = async (req, res, next) => {
+  try {
+    const playlists = await playlistModel.listPublic();
+    res.send(playlists);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports.createPlaylist = async (req, res, next) => {
   try {
     const { title, description } = req.body;
@@ -39,6 +48,10 @@ module.exports.updateVisibility = async (req, res, next) => {
   try {
     const { playlist_id } = req.params;
     const { is_public } = req.body;
+
+    console.log('playlist_id:', playlist_id);
+    console.log('is_public:', is_public, typeof is_public);
+    console.log('session user_id:', req.session.user_id);
 
     const playlist = await playlistModel.find(playlist_id);
     if (!playlist) return res.status(404).send({ error: 'Playlist not found.' });

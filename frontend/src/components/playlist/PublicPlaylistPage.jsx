@@ -29,12 +29,7 @@ function PublicPlaylistPage({ setSelectedPlaylist }) {
   return (
     <section>
       <h2>Public Playlists</h2>
-      <input
-        className="sidebar-search"
-        placeholder="Search playlists by name..."
-        value={query}
-        onChange={e => setQuery(e.target.value)}
-      />
+      <input className="sidebar-search" placeholder="Search playlists by name..." value={query} onChange={e => setQuery(e.target.value)} />
       {filtered.length === 0 && query && (
         <p>No playlists found for "{query}"</p>
       )}
@@ -52,7 +47,6 @@ function PublicPlaylistPage({ setSelectedPlaylist }) {
               <p className="playlist-creator" style={{ padding: 0 }}>by {playlist.created_by}</p>
             </div>
           </li>
-
         ))}
       </ul>
     </section>

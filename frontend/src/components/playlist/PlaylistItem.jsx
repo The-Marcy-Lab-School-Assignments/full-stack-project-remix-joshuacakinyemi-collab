@@ -62,6 +62,16 @@ function PlaylistItem({ playlist, loadPlaylists, onSelectPlaylist }) {
           <h4>{playlist.description}</h4>
           <span className="playlist-creator">by {playlist.created_by}</span> {/* add this */}
         </div>
+        <input
+          type="checkbox"
+          checked={playlist.is_public}
+          onChange={handleChange}
+          title="Toggle public/private"
+        />
+        <span className={playlist.is_public ? 'Public' : 'Private'}>
+          {playlist.is_public ? 'Public' : 'Private'}
+        </span>
+
         <button onClick={handleExpand}>{isExpanded ? '▲' : '▼'} Songs</button>
         <button onClick={() => onSelectPlaylist(playlist)}>▶ Play</button>
         <button onClick={() => setIsEditing(true)}>Edit</button>

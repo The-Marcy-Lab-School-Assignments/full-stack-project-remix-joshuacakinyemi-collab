@@ -31,21 +31,26 @@ function PublicPlaylistPage({ setSelectedPlaylist }) {
       <h2>Public Playlists</h2>
       <input
         className="sidebar-search"
-        placeholder="Search playlists..."
+        placeholder="Search playlists by name..."
         value={query}
         onChange={e => setQuery(e.target.value)}
       />
+      {filtered.length === 0 && query && (
+        <p>No playlists found for "{query}"</p>
+      )}
       <ul id="public-playlist-list">
-        {playlists.map((playlist) => (
+        {filtered.map((playlist) => (
           <li
             key={playlist.playlist_id}
             className="playlist-item"
             onClick={() => setSelectedPlaylist(playlist)}
             style={{ cursor: 'pointer' }}
           >
-            <h3>{playlist.title}</h3>
-            <p>{playlist.description}</p>
-            <p className="playlist-creator">by {playlist.created_by}</p> {/* add this */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
+              <h3>{playlist.title}</h3>
+              <p style={{ padding: 0 }}>{playlist.description}</p>
+              <p className="playlist-creator" style={{ padding: 0 }}>by {playlist.created_by}</p>
+            </div>
           </li>
 
         ))}

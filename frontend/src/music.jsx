@@ -17,11 +17,12 @@ function MusicPlayer({ songs }) {
   const { accent } = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [autoplay, setAutoplay] = useState(false);
+  const [autoplay, setAutoplay] = useState(true);
   const [shuffle, setShuffle] = useState(false);
   const [youtubeData, setYoutubeData] = useState({});
   const [duration, setDuration] = useState('0:00');
   const [currentTime, setCurrentTime] = useState('0:00');
+  const autoplayRef = useRef(true);
   const playerRef = useRef(null);
   const intervalRef = useRef(null);
   const containerRef = useRef(null);
@@ -45,6 +46,13 @@ function MusicPlayer({ songs }) {
       return null;
     }
   };
+
+  const handleAutoplayToggle = () => {
+    const next = !autoplay;
+    setAutoplay(next);
+    autoplayRef.current = next; // fix: update ref
+  };
+
 
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
@@ -91,7 +99,7 @@ function MusicPlayer({ songs }) {
           },
           onStateChange: (e) => {
             setIsPlaying(e.data === window.YT.PlayerState.PLAYING);
-            if (e.data === window.YT.PlayerState.ENDED && autoplay) {
+            if (e.data === window.YT.PlayerState.ENDED && autoplayRef.current) {
               changeSong(true);
             }
           },
@@ -185,17 +193,29 @@ function MusicPlayer({ songs }) {
             </div>
             <div className="pl-title">{song.title}</div>
             <div className="pl-artist">{song.author}</div>
-            <div className="pl-dur">{duration}</div>
+            <div className="pl-dur">
+              {i === currentIndex ? duration : ''} { }
+            </div>
             <div></div>
           </div>
         ))}
+
       </div>
 
       {/* Controls */}
       <div className="controls">
         <div className="prog-row">
           <span className="prog-time">{currentTime}</span>
-          <div className="prog-track">
+          <div
+            className="prog-track"
+            onClick={(e) => {
+              if (!playerRef.current?.getDuration) return;
+              const rect = e.currentTarget.getBoundingClientRect();
+              const pct = (e.clientX - rect.left) / rect.width;
+              const seekTo = pct * playerRef.current.getDuration();
+              playerRef.current.seekTo(seekTo, true);
+            }}
+          >
             <div
               className="prog-fill"
               style={{
@@ -221,17 +241,13 @@ function MusicPlayer({ songs }) {
           <button className="tbtn" onClick={() => changeSong(true)}>⏭</button>
           <button
             className={`tbtn${autoplay ? ' on' : ''}`}
-            onClick={() => setAutoplay(a => !a)}
+            onClick={handleAutoplayToggle} // fix: was inline setAutoplay
             title="Autoplay"
           >↻</button>
+
         </div>
 
-        <div className="vol-row">
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>🔈</span>
-          <div className="vol-track">
-            <div className="vol-fill" />
-          </div>
-        </div>
+
       </div>
     </div>
   );

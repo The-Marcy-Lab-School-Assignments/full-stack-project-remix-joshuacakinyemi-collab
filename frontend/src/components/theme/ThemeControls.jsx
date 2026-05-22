@@ -7,7 +7,7 @@ function ThemeControls() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <button className="mode-toggle" onClick={toggleMode}>
         <i className={`ti ${isDark ? 'ti-moon' : 'ti-sun'}`} aria-hidden="true" />
-        {isDark ? 'Dark mode' : 'Light mode'}
+        {isDark ? 'Light mode' : 'Dark mode'}
       </button>
       <div style={{ fontSize: '9px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         Accent color

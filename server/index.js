@@ -12,6 +12,7 @@ const checkAuthentication = require('./middleware/checkAuthentication');
 const authControllers = require('./controllers/authControllers');
 const playlistControllers = require('./controllers/playlistControllers');
 const songControllers = require('./controllers/songControllers');
+const favoriteControllers = require('./controllers/favoriteControllers');
 
 const { searchYouTube } = require('./utils/youtubeSearch');
 
@@ -62,8 +63,29 @@ app.patch('/api/songs/:song_id', checkAuthentication, songControllers.updateSong
 app.delete('/api/songs/:song_id', checkAuthentication, songControllers.deleteSong);
 
 // ====================================
+// Favorites routes
+// ====================================
+
+app.get('/api/favorites', checkAuthentication, favoriteControllers.listFavorites);
+app.get('/api/favorites/ids', checkAuthentication, favoriteControllers.listFavoriteIds);
+app.post('/api/favorites/:playlist_id', checkAuthentication, favoriteControllers.addFavorite);
+app.delete('/api/favorites/:playlist_id', checkAuthentication, favoriteControllers.removeFavorite);
+
+// ====================================
 // Youtube Data Handler
 // ====================================
+
+// Returns up to 5 YouTube results for a given title + author so the user can pick the right video.
+app.get('/api/youtube/search', async (req, res, next) => {
+  try {
+    const { title, author } = req.query;
+    if (!title || !author) return res.status(400).send({ error: 'title and author are required' });
+    const results = await searchYouTube(title, author, 5);
+    res.send(results);
+  } catch (err) {
+    next(err);
+  }
+});
 
 app.get('/api/songs/:song_id/youtube', async (req, res, next) => {
   try {

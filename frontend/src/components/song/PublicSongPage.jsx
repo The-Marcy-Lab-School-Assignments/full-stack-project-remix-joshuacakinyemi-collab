@@ -24,13 +24,17 @@ function PublicSongPage({ playlist, onBack }) {
   if (error) return <p className="error">Something went wrong: {error}</p>;
 
   return (
-    <section>
-      <button onClick={onBack}>← Back to Playlists</button>
-      <h2>{playlist.title}</h2>
-      <p style={{ padding: 0 }}>{playlist.description}</p>
-      <p className="playlist-creator" style={{ padding: 0 }}>by {playlist.created_by}</p>
+    <section className="song-page">
+      <button className="back-btn" onClick={onBack}>← Back</button>
+      <div className="song-page-header">
+        <div className="song-page-meta">
+          <h2>{playlist.title}</h2>
+          <p className="song-page-desc">{playlist.description}</p>
+          <span className="playlist-creator">by {playlist.created_by}</span>
+        </div>
+      </div>
       {songs.length > 0
-        ? <MusicPlayer key={playlist.playlist_id} songs={songs} /> // fix: key forces remount
+        ? <MusicPlayer key={playlist.playlist_id} songs={songs} />
         : <p>No songs in this playlist yet.</p>
       }
     </section>

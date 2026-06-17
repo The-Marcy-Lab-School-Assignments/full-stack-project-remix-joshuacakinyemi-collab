@@ -15,9 +15,9 @@ module.exports.find = async (song_id) => {
 };
 
 // Creates a new song. Returns the full song row.
-module.exports.create = async (title, author, playlist_id) => {
-  const query = 'INSERT INTO songs (title, author, playlist_id) VALUES ($1, $2, $3) RETURNING *';
-  const { rows } = await pool.query(query, [title, author, playlist_id]);
+module.exports.create = async (title, author, playlist_id, youtube_id = null, thumbnail = null) => {
+  const query = 'INSERT INTO songs (title, author, playlist_id, youtube_id, thumbnail) VALUES ($1, $2, $3, $4, $5) RETURNING *';
+  const { rows } = await pool.query(query, [title, author, playlist_id, youtube_id, thumbnail]);
   return rows[0];
 };
 

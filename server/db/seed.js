@@ -5,6 +5,7 @@ const SALT_ROUNDS = 7;
 
 const seed = async () => {
   // Drop tables in reverse dependency order (todos references users via FK)
+  await pool.query('DROP TABLE IF EXISTS favorites CASCADE');
   await pool.query('DROP TABLE IF EXISTS songs CASCADE');
   await pool.query('DROP TABLE IF EXISTS playlists CASCADE');
   await pool.query('DROP TABLE IF EXISTS users CASCADE');
@@ -35,6 +36,14 @@ const seed = async () => {
       youtube_id  TEXT,
       thumbnail   TEXT,
       playlist_id     INT REFERENCES playlists(playlist_id) ON DELETE CASCADE
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE favorites (
+      user_id     INT REFERENCES users(user_id) ON DELETE CASCADE,
+      playlist_id INT REFERENCES playlists(playlist_id) ON DELETE CASCADE,
+      PRIMARY KEY (user_id, playlist_id)
     )
   `);
 
@@ -77,6 +86,11 @@ const seed = async () => {
       ('Beneath the Mask',         'Lyn Inaizumi',    $4), 
       ('No More What Ifs',         'Lyn Inaizumi',    $4)
   `, [CLGKIFT.playlist_id, RM.playlist_id, PB.playlist_id, JM.playlist_id]);
+
+  // DjRandom favorites Phantom Beats; ImNotACat favorites Random Mix
+  await pool.query(`
+    INSERT INTO favorites (user_id, playlist_id) VALUES ($1, $2), ($3, $4)
+  `, [DjRandom.user_id, PB.playlist_id, ImNotACat.user_id, RM.playlist_id]);
 
   return users;
 };

@@ -105,12 +105,16 @@ function App() {
 
 
     return (
-      <>
-        <PublicPlaylistPage setSelectedPlaylist={selectPlaylist} />
+      <div className={`home-view${!currentUser ? ' home-view--split' : ''}`}>
+        <div className="browse-col">
+          <PublicPlaylistPage setSelectedPlaylist={selectPlaylist} currentUser={currentUser} />
+        </div>
         {!currentUser && (
-          <AuthPage handleLogin={handleLogin} handleRegister={handleRegister} />
+          <div className="auth-col">
+            <AuthPage handleLogin={handleLogin} handleRegister={handleRegister} />
+          </div>
         )}
-      </>
+      </div>
     );
   };
 

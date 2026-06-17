@@ -24,9 +24,9 @@ module.exports.listSongs = async (req, res, next) => {
 module.exports.createSong = async (req, res, next) => {
   try {
     const { playlist_id } = req.params;
-    const { title, author } = req.body;
+    const { title, author, youtube_id, thumbnail } = req.body;
     if (!title && !author) return res.status(400).send({ error: 'Title and author is required.' });
-    const song = await songModel.create(title, author, playlist_id);
+    const song = await songModel.create(title, author, playlist_id, youtube_id || null, thumbnail || null);
     res.status(201).send(song);
   } catch (err) {
     next(err);

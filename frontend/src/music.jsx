@@ -13,20 +13,39 @@ function loadYoutubeAPI() {
 }
 
 function MusicPlayer({ songs }) {
-
   const { accent } = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [autoplay, setAutoplay] = useState(true);
   const [shuffle, setShuffle] = useState(false);
+  const [loop, setLoop] = useState(false);
   const [youtubeData, setYoutubeData] = useState({});
   const [duration, setDuration] = useState('0:00');
   const [currentTime, setCurrentTime] = useState('0:00');
-  const autoplayRef = useRef(true);
+
+  // Refs so onStateChange (set up once) always reads current values
+  const currentIndexRef = useRef(0);
+  const shuffleRef = useRef(false);
+  const loopRef = useRef(false);
   const playerRef = useRef(null);
   const intervalRef = useRef(null);
   const containerRef = useRef(null);
 
+  const goToIndex = (i) => {
+    currentIndexRef.current = i;
+    setCurrentIndex(i);
+  };
+
+  const toggleShuffle = () => {
+    const next = !shuffleRef.current;
+    shuffleRef.current = next;
+    setShuffle(next);
+  };
+
+  const toggleLoop = () => {
+    const next = !loopRef.current;
+    loopRef.current = next;
+    setLoop(next);
+  };
 
   const currentSong = songs[currentIndex];
   const nextIndex = shuffle
@@ -47,13 +66,6 @@ function MusicPlayer({ songs }) {
     }
   };
 
-  const handleAutoplayToggle = () => {
-    const next = !autoplay;
-    setAutoplay(next);
-    autoplayRef.current = next; // fix: update ref
-  };
-
-
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
     const m = Math.floor(seconds / 60);
@@ -71,6 +83,17 @@ function MusicPlayer({ songs }) {
     }, 500);
   };
 
+  // changeSong reads from refs so it's safe to call from onStateChange
+  const changeSong = (next = true) => {
+    const idx = currentIndexRef.current;
+    let newIndex;
+    if (shuffleRef.current) newIndex = Math.floor(Math.random() * songs.length);
+    else if (next) newIndex = (idx + 1) % songs.length;
+    else newIndex = (idx - 1 + songs.length) % songs.length;
+    goToIndex(newIndex);
+    initPlayer(songs[newIndex], true);
+  };
+
   const initPlayer = async (song, autoStart = false) => {
     const data = await fetchYoutubeData(song);
     if (!data) return;
@@ -79,12 +102,8 @@ function MusicPlayer({ songs }) {
 
     if (playerRef.current?.loadVideoById) {
       playerRef.current.loadVideoById(data.youtube_id);
-
-      if (autoStart) {
-        if (playerRef.current?.playVideo) playerRef.current.playVideo();
-      } else {
-        if (playerRef.current?.pauseVideo) playerRef.current.pauseVideo();
-      }
+      if (autoStart) playerRef.current.playVideo?.();
+      else playerRef.current.pauseVideo?.();
     } else {
       playerRef.current = new window.YT.Player(containerRef.current, {
         height: '0',
@@ -99,8 +118,15 @@ function MusicPlayer({ songs }) {
           },
           onStateChange: (e) => {
             setIsPlaying(e.data === window.YT.PlayerState.PLAYING);
-            if (e.data === window.YT.PlayerState.ENDED && autoplayRef.current) {
-              changeSong(true);
+            if (e.data === window.YT.PlayerState.ENDED) {
+              if (loopRef.current) {
+                // Replay the same song
+                e.target.seekTo(0);
+                e.target.playVideo();
+              } else {
+                // Always advance to next song
+                changeSong(true);
+              }
             }
           },
         },
@@ -126,20 +152,9 @@ function MusicPlayer({ songs }) {
     else playerRef.current.playVideo();
   };
 
-  const changeSong = (next = true) => {
-    let newIndex;
-    if (shuffle) newIndex = Math.floor(Math.random() * songs.length);
-    else if (next) newIndex = (currentIndex + 1) % songs.length;
-    else newIndex = (currentIndex - 1 + songs.length) % songs.length;
-    setCurrentIndex(newIndex);
-    initPlayer(songs[newIndex], true);
-    setIsPlaying(true);
-  };
-
   const playSong = (index) => {
-    setCurrentIndex(index);
+    goToIndex(index);
     initPlayer(songs[index], true);
-    setIsPlaying(true);
   };
 
   const currentData = youtubeData[currentSong?.song_id];
@@ -148,10 +163,8 @@ function MusicPlayer({ songs }) {
 
   return (
     <div className="win">
-      {/* Hidden YouTube player */}
       <div ref={containerRef} style={{ display: 'none' }} />
 
-      {/* Now playing strip */}
       <div className="now-playing">
         <div className="art">
           {currentData?.thumbnail
@@ -163,15 +176,16 @@ function MusicPlayer({ songs }) {
           <div className="song-title">{currentSong.title}</div>
           <div className="song-by">{currentSong.author}</div>
           <div className="song-sub">
-            {nextSong && <>Next: {nextSong.title} by {nextSong.author}</>}
+            {loop
+              ? '↺ Looping this song'
+              : nextSong && <>Next: {nextSong.title} by {nextSong.author}</>
+            }
           </div>
         </div>
       </div>
 
-      {/* Visualizer */}
       <Visualizer isPlaying={isPlaying} accent={accent.color} />
 
-      {/* Playlist header */}
       <div className="pl-header">
         <div>#</div>
         <div>Title</div>
@@ -180,7 +194,6 @@ function MusicPlayer({ songs }) {
         <div></div>
       </div>
 
-      {/* Song queue */}
       <div className="wmp-playlist">
         {songs.map((song, i) => (
           <div
@@ -193,16 +206,12 @@ function MusicPlayer({ songs }) {
             </div>
             <div className="pl-title">{song.title}</div>
             <div className="pl-artist">{song.author}</div>
-            <div className="pl-dur">
-              {i === currentIndex ? duration : ''} { }
-            </div>
+            <div className="pl-dur">{i === currentIndex ? duration : ''}</div>
             <div></div>
           </div>
         ))}
-
       </div>
 
-      {/* Controls */}
       <div className="controls">
         <div className="prog-row">
           <span className="prog-time">{currentTime}</span>
@@ -212,8 +221,7 @@ function MusicPlayer({ songs }) {
               if (!playerRef.current?.getDuration) return;
               const rect = e.currentTarget.getBoundingClientRect();
               const pct = (e.clientX - rect.left) / rect.width;
-              const seekTo = pct * playerRef.current.getDuration();
-              playerRef.current.seekTo(seekTo, true);
+              playerRef.current.seekTo(pct * playerRef.current.getDuration(), true);
             }}
           >
             <div
@@ -221,7 +229,7 @@ function MusicPlayer({ songs }) {
               style={{
                 width: playerRef.current?.getDuration
                   ? `${(playerRef.current.getCurrentTime() / playerRef.current.getDuration()) * 100}%`
-                  : '0%'
+                  : '0%',
               }}
             />
           </div>
@@ -231,7 +239,7 @@ function MusicPlayer({ songs }) {
         <div className="transport">
           <button
             className={`tbtn${shuffle ? ' on' : ''}`}
-            onClick={() => setShuffle(s => !s)}
+            onClick={toggleShuffle}
             title="Shuffle"
           >⇄</button>
           <button className="tbtn" onClick={() => changeSong(false)}>⏮</button>
@@ -240,19 +248,14 @@ function MusicPlayer({ songs }) {
           </button>
           <button className="tbtn" onClick={() => changeSong(true)}>⏭</button>
           <button
-            className={`tbtn${autoplay ? ' on' : ''}`}
-            onClick={handleAutoplayToggle} // fix: was inline setAutoplay
-            title="Autoplay"
-          >↻</button>
-
+            className={`tbtn${loop ? ' on' : ''}`}
+            onClick={toggleLoop}
+            title="Loop song"
+          >↺</button>
         </div>
-
-
       </div>
     </div>
   );
 }
-
-
 
 export default MusicPlayer;

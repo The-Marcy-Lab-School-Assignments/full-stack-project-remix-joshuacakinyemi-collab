@@ -1,6 +1,6 @@
 # Playlist App — Full-Stack Case Study
 
-WebPage: https://full-stack-project-remix-joshuacakinyemi.onrender.com
+WebPage(Currently due to outside reasons, the website will not function properly, until outside issue is fixed): https://full-stack-project-remix-joshuacakinyemi.onrender.com
 
 A full-stack Playlist app built with React, Express, and Postgres. Demonstrates session-based authentication, session rehydration, auth-dependent data fetching, and conditional rendering — the same patterns students use in their full-stack projects.
 

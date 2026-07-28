@@ -1,17 +1,14 @@
-import { useTheme } from "../../ThemeContext";
+import { useTheme } from '../../ThemeContext';
 
 function ThemeControls() {
   const { isDark, toggleMode, accentIndex, setAccent, ACCENTS } = useTheme();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <div className="theme-controls">
       <button className="mode-toggle" onClick={toggleMode}>
         <i className={`ti ${isDark ? 'ti-moon' : 'ti-sun'}`} aria-hidden="true" />
-        {isDark ? 'Light mode' : 'Dark mode'}
+        {isDark ? 'Light' : 'Dark'}
       </button>
-      <div style={{ fontSize: '9px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-        Accent color
-      </div>
       <div className="color-swatches">
         {ACCENTS.map((a, i) => (
           <div
@@ -26,6 +23,5 @@ function ThemeControls() {
     </div>
   );
 }
-
 
 export default ThemeControls;

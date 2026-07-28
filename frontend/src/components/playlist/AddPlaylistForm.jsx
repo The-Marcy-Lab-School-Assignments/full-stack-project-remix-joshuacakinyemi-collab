@@ -1,15 +1,19 @@
+import { useState } from 'react';
 import { createPlaylist } from '../../adapters/playlist-adapters.js';
 
 function AddPlaylistForm({ loadPlaylists }) {
+  const [error, setError] = useState(null);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const form = e.target;
-    const title = form.elements.title.value;
-    const description = form.elements.description.value;
+    const title = form.elements.title.value.trim();
+    const description = form.elements.description.value.trim();
     if (!title || !description) return;
 
-    const { error } = await createPlaylist(title, description);
-    if (error) return console.error(error);
+    setError(null);
+    const { error: err } = await createPlaylist(title, description);
+    if (err) { setError('Could not create playlist.'); return; }
 
     await loadPlaylists();
     form.reset();
@@ -17,9 +21,10 @@ function AddPlaylistForm({ loadPlaylists }) {
 
   return (
     <form id="add-playlist-form" onSubmit={handleSubmit}>
-      <label htmlFor="playlist-input">New Playlist:</label>
-      <input type="text" name="title" id="title-input" placeholder="Add a title." />
-      <input type="text" name="description" id="description-input" placeholder="Add a description." />
+      <label htmlFor="title-input">New Playlist</label>
+      <input type="text" name="title" id="title-input" placeholder="Title" />
+      <input type="text" name="description" id="description-input" placeholder="Description" />
+      {error && <p className="error">{error}</p>}
       <button type="submit">Add</button>
     </form>
   );

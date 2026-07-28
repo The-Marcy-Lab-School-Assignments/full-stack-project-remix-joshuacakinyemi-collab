@@ -813,6 +813,13 @@ p.error { color: var(--accent2); }
   color: var(--accent);
 }
 
+.theme-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
 .color-swatches {
   display: flex;
   gap: 7px;

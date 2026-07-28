@@ -27,10 +27,9 @@ export function ThemeProvider({ children }) {
   }, []);
 
   const applyTheme = (dark, idx) => {
-
     const a = ACCENTS[idx];
-    root.style.setProperty('--accent', a.color);
-    root.style.setProperty('--accent-glow', a.glow);
+    document.documentElement.style.setProperty('--accent', a.color);
+    document.documentElement.style.setProperty('--accent-glow', a.glow);
     document.body.classList.toggle('light', !dark);
   };
 

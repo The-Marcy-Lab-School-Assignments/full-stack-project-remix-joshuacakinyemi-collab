@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import Visualizer from '../src/components/theme/Visualizer';
-import { useTheme } from '../src/ThemeContext';
+import Visualizer from './components/theme/Visualizer';
+import { useTheme } from './ThemeContext';
 
 function loadYoutubeAPI() {
   return new Promise((resolve) => {

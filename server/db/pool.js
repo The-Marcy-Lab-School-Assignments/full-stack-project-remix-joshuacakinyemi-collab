@@ -15,7 +15,7 @@ const initPool = async () => {
         host: process.env.SSH_HOST,
         port: 22,
         username: process.env.SSH_USER,
-        privateKey: process.env.SSH_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        privateKey: Buffer.from(process.env.SSH_PRIVATE_KEY, 'base64').toString('utf8'),
       },
       {
         srcAddr: '127.0.0.1',

@@ -1,4 +1,4 @@
-const pool = require('../db/pool');
+const { getPool } = require('../db/pool');
 
 module.exports.add = async (user_id, playlist_id) => {
   const query = `
@@ -7,13 +7,13 @@ module.exports.add = async (user_id, playlist_id) => {
     ON CONFLICT DO NOTHING
     RETURNING *
   `;
-  const { rows } = await pool.query(query, [user_id, playlist_id]);
+  const { rows } = await getPool().query(query, [user_id, playlist_id]);
   return rows[0] || null;
 };
 
 module.exports.remove = async (user_id, playlist_id) => {
   const query = 'DELETE FROM favorites WHERE user_id = $1 AND playlist_id = $2 RETURNING *';
-  const { rows } = await pool.query(query, [user_id, playlist_id]);
+  const { rows } = await getPool().query(query, [user_id, playlist_id]);
   return rows[0] || null;
 };
 
@@ -26,12 +26,12 @@ module.exports.listByUser = async (user_id) => {
     WHERE favorites.user_id = $1
     ORDER BY playlists.playlist_id ASC
   `;
-  const { rows } = await pool.query(query, [user_id]);
+  const { rows } = await getPool().query(query, [user_id]);
   return rows;
 };
 
 module.exports.listIdsByUser = async (user_id) => {
   const query = 'SELECT playlist_id FROM favorites WHERE user_id = $1';
-  const { rows } = await pool.query(query, [user_id]);
+  const { rows } = await getPool().query(query, [user_id]);
   return rows.map((r) => r.playlist_id);
 };

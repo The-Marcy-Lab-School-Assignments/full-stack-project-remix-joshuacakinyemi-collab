@@ -3,8 +3,8 @@ const express = require('express');
 const cookieSession = require('cookie-session');
 require('dotenv').config();
 
-const pool = require(`./db/pool`)
-const songModel = require('./models/songModel')
+const { initPool, getPool } = require('./db/pool');
+const songModel = require('./models/songModel');
 
 const logRoutes = require('./middleware/logRoutes');
 const checkAuthentication = require('./middleware/checkAuthentication');
@@ -18,7 +18,6 @@ const { searchYouTube } = require('./utils/youtubeSearch');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const { error } = require('console')
 
 // ====================================
 // Middleware
@@ -28,9 +27,6 @@ app.use(logRoutes);
 app.use(cookieSession({ name: 'session', secret: process.env.SESSION_SECRET }));
 app.use(express.json());
 
-// In production, serve the built React app from frontend/dist.
-// In development, Vite's dev server handles the frontend on a separate port
-// and proxies /api requests to this server.
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // ====================================
@@ -43,7 +39,7 @@ app.get('/api/auth/me', authControllers.getMe);
 app.delete('/api/auth/logout', authControllers.logout);
 
 // ====================================
-// Playlist routes (all but one require authentication)
+// Playlist routes
 // ====================================
 
 app.get('/api/playlists', checkAuthentication, playlistControllers.listPlaylists);
@@ -54,7 +50,7 @@ app.patch('/api/playlists/:playlist_id/visibility', checkAuthentication, playlis
 app.delete('/api/playlists/:playlist_id', checkAuthentication, playlistControllers.deletePlaylist);
 
 // ====================================
-// Song routes (all but one require authentication)
+// Song routes
 // ====================================
 
 app.get('/api/playlists/:playlist_id/songs', songControllers.listSongs);
@@ -72,10 +68,9 @@ app.post('/api/favorites/:playlist_id', checkAuthentication, favoriteControllers
 app.delete('/api/favorites/:playlist_id', checkAuthentication, favoriteControllers.removeFavorite);
 
 // ====================================
-// Youtube Data Handler
+// YouTube routes
 // ====================================
 
-// Returns up to 5 YouTube results for a given title + author so the user can pick the right video.
 app.get('/api/youtube/search', async (req, res, next) => {
   try {
     const { title, author } = req.query;
@@ -94,35 +89,41 @@ app.get('/api/songs/:song_id/youtube', async (req, res, next) => {
     if (!song) return res.status(404).send({ error: 'Song not found.' });
 
     if (song.youtube_id) {
-      return res.send({ youtube_id: song.youtube_id, thumbnail: song.thumbnail })
+      return res.send({ youtube_id: song.youtube_id, thumbnail: song.thumbnail });
     }
 
     const result = await searchYouTube(song.title, song.author);
-    if (!result) return res.status(404).send({ error: 'No Youtube result found' })
+    if (!result) return res.status(404).send({ error: 'No YouTube result found.' });
 
-    await pool.query(
+    await getPool().query(
       'UPDATE songs SET youtube_id = $1, thumbnail = $2 WHERE song_id = $3',
       [result.youtube_id, result.thumbnail, song_id]
     );
 
     res.send(result);
   } catch (err) {
-    next(err)
+    next(err);
   }
-})
+});
 
 // ====================================
 // Global Error Handler
 // ====================================
 
-const handleError = (err, req, res, next) => {
+app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).send({ message: 'Internal Server Error' });
-};
-app.use(handleError);
+});
 
 // ====================================
-// Listen
+// Start — open DB connection first, then listen
 // ====================================
 
-app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+initPool()
+  .then(() => {
+    app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+  })
+  .catch((err) => {
+    console.error('Failed to connect to database:', err);
+    process.exit(1);
+  });
